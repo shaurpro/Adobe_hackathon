@@ -1,0 +1,547 @@
+{
+  "site": "example-fixture.test",
+  "audited_at": "2026-08-31T12:16:12Z",
+  "summary": {
+    "total_findings": 17,
+    "proactive_recommendations": 5,
+    "critical": 1,
+    "high": 6,
+    "medium": 5,
+    "low": 5
+  },
+  "findings": [
+    {
+      "id": "F-001",
+      "title": "robots.txt blocks 4 AI/search crawler(s) at the site root",
+      "severity": "critical",
+      "evidence": "https://example-fixture.test/robots.txt denies '/' to: GPTBot -> gptbot: Disallow: /; ClaudeBot -> claudebot: Disallow: /; PerplexityBot -> perplexitybot: Disallow: /; CCBot -> ccbot: Disallow: /. Stage-1 failure — these agents never fetch a byte, so nothing else about the site can be read, quoted or cited by assistant traffic as a class.",
+      "suggested_action": {
+        "summary": "Decide deliberately which agents may read public marketing content. If citation in AI answers is wanted, allow the retrieval agents (ClaudeBot, GPTBot, PerplexityBot, OAI-SearchBot) on public pages while keeping bulk-training crawlers (CCBot, Google-Extended) blocked if that is the policy preference.",
+        "priority": "critical"
+      },
+      "mechanism": "M1",
+      "signal": "M1-S1",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/robots.txt"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M1-S1:root-block",
+      "non_deterministic": false,
+      "falsified_by": "Deliberate policy to stay out of AI answers falsifies the severity but not the observation; confirm intent before acting."
+    },
+    {
+      "id": "F-002",
+      "title": "1 linked/sitemapped content URL(s) are disallowed in robots.txt",
+      "severity": "high",
+      "evidence": "These URLs are advertised to crawlers (via internal links or the sitemap) yet blocked from fetching: https://example-fixture.test/pricing.html (*: Disallow: /pricing). Utility paths (cart, admin, search, faceted params) were excluded from this count.",
+      "suggested_action": {
+        "summary": "Remove the Disallow rules covering public content paths, or stop linking/sitemapping them so crawl budget is not spent on doors that are locked.",
+        "priority": "high"
+      },
+      "mechanism": "M1",
+      "signal": "M1-S1",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/pricing.html"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M1-S1:content-path-block",
+      "non_deterministic": false,
+      "falsified_by": "If these pages are intentionally private, the correct fix is removing them from the sitemap/nav, not opening robots."
+    },
+    {
+      "id": "F-003",
+      "title": "Internally linked URLs return error status codes",
+      "severity": "high",
+      "evidence": "1 linked URL(s) returned 4xx/5xx: https://example-fixture.test/gone.html -> 404. Broken internal links waste crawl budget and break the path a retrieval agent follows to reach fact pages.",
+      "suggested_action": {
+        "summary": "Fix or remove the broken links; 301 retired URLs to their closest live equivalent rather than leaving them 404.",
+        "priority": "high"
+      },
+      "mechanism": "M1",
+      "signal": "M1-S2",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/gone.html"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M1-S2:broken-links",
+      "non_deterministic": false,
+      "falsified_by": "Deliberate 410s for removed content are correct; verify intent."
+    },
+    {
+      "id": "F-004",
+      "title": "JSON-LD block fails to parse and is discarded wholesale",
+      "severity": "high",
+      "evidence": "https://example-fixture.test/: JSON parse failed at line 1 col 84: Expecting property name enclosed in double quotes [{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"YOUR_COMPANY_NAME\",}] (1 block(s) affected). An invalid block is dropped entirely — the site pays the cost of emitting structured data and receives none of the benefit.",
+      "suggested_action": {
+        "summary": "Fix the JSON syntax (usually an unescaped quote, a trailing comma, or a templating variable that did not render) and add a build-time JSON.parse check so invalid markup cannot ship.",
+        "priority": "high"
+      },
+      "mechanism": "M3",
+      "signal": "M3-S3",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M3-S3:ld-parse-error",
+      "non_deterministic": false
+    },
+    {
+      "id": "F-005",
+      "title": "Key facts distributed only as PDF",
+      "severity": "high",
+      "evidence": "1 link(s) route pricing/spec/menu-type information into PDFs rather than HTML: Download rate card (PDF) -> https://example-fixture.test/rates.pdf. PDFs are extracted inconsistently, lose structure, and are frequently skipped entirely by retrieval agents.",
+      "suggested_action": {
+        "summary": "Publish an HTML version of every PDF that carries decision-relevant facts (prices, specs, hours, policies) and keep the PDF as a download link beside it, not instead of it.",
+        "priority": "high"
+      },
+      "mechanism": "M3",
+      "signal": "M3-S2",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/rates.pdf"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M3-S2:pdf-only",
+      "non_deterministic": false,
+      "falsified_by": "A PDF is not a finding when an HTML page states the same facts — check for an HTML equivalent before acting."
+    },
+    {
+      "id": "F-006",
+      "title": "No Organization/entity structured data anywhere on the site",
+      "severity": "high",
+      "evidence": "None of the 2 sampled pages declare an Organization, LocalBusiness or comparable entity type in JSON-LD or microdata. There is no machine-readable statement of who this site is about.",
+      "suggested_action": {
+        "summary": "Add one Organization (or LocalBusiness) JSON-LD block on the homepage with name, url, logo, description, address/areaServed, foundingDate and sameAs links to official profiles. Give it a stable @id and reference that @id from other page types rather than redeclaring it.",
+        "priority": "high"
+      },
+      "mechanism": "M3",
+      "signal": "M3-S3",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M3-S3:no-entity",
+      "non_deterministic": false,
+      "falsified_by": "A valid Organization on any single page satisfies this check — it is only raised when no sampled page has one."
+    },
+    {
+      "id": "F-007",
+      "title": "Content is assembled client-side and absent from the server response",
+      "severity": "high",
+      "evidence": "1 of 2 sampled pages return an effectively empty document to a non-JS fetch: https://example-fixture.test/ (0 words of body text in the raw HTML, 3 external scripts, mount node #root)",
+      "suggested_action": {
+        "summary": "Server-render or pre-render the primary content — at minimum the H1, the core descriptive paragraph, key facts (pricing, specs, location) and the primary navigation links — so the first HTTP response already contains the facts. Hydrate interactivity on top of that, rather than building the document from scratch in the browser.",
+        "priority": "critical"
+      },
+      "mechanism": "M3",
+      "signal": "M3-S1",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "inferred",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M3-S1:client-render",
+      "non_deterministic": false,
+      "falsified_by": "Pages whose facts appear in raw JSON-LD or <noscript> are downgraded, and late-hydrating chrome (chat widgets, related posts, cookie banners) is excluded from the text comparison.",
+      "severity_before_cap": "critical",
+      "cap_reason": "severity capped at 'high' because evidence confidence is 'inferred'",
+      "related_effects": [
+        {
+          "title": "No plain-language statement of what this organisation is",
+          "skill": "engagement-audit",
+          "evidence_key": "E1:no-claim",
+          "note": "Same root cause; folded into this finding to avoid double-counting. Fixing the cause resolves it."
+        }
+      ]
+    },
+    {
+      "id": "F-008",
+      "title": "No mobile viewport declared",
+      "severity": "medium",
+      "evidence": "2 of 2 pages omit <meta name=viewport>, e.g. https://example-fixture.test/. Mobile browsers fall back to a desktop-width layout, forcing pinch-and-zoom on the majority of traffic.",
+      "suggested_action": {
+        "summary": "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> to the base template.",
+        "priority": "medium"
+      },
+      "mechanism": "M1",
+      "signal": "E3",
+      "skill": "engagement-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/",
+        "https://example-fixture.test/about.html"
+      ],
+      "affected_count": 2,
+      "evidence_key": "E3:no-viewport",
+      "non_deterministic": false
+    },
+    {
+      "id": "F-009",
+      "title": "Content images carry no usable alt text",
+      "severity": "medium",
+      "evidence": "2 of 2 non-decorative content images have missing or meaningless alt text, e.g. https://example-fixture.test/about.html :: /team.png; https://example-fixture.test/about.html :: /chart-of-prices.png (alt='chart.png'). Any fact conveyed only by these images is invisible to text-based extraction.",
+      "suggested_action": {
+        "summary": "Write alt text that states the fact the image carries ('Model X, 12-hour battery, 1.2 kg'), not the file name. Where an image contains numbers or specifications, also state them in body text or structured data.",
+        "priority": "medium"
+      },
+      "mechanism": "M3",
+      "signal": "M3-S2",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/about.html",
+        "https://example-fixture.test/about.html"
+      ],
+      "affected_count": 2,
+      "evidence_key": "M3-S2:alt-text",
+      "non_deterministic": false,
+      "falsified_by": "Empty alt=\"\" on decorative images is correct practice and is not counted; icons under 48px and role=presentation are skipped."
+    },
+    {
+      "id": "F-010",
+      "title": "Page types that support structured data have none",
+      "severity": "medium",
+      "evidence": "2 of 2 sampled pages carry no JSON-LD or microdata, including 1 homepage page(s). Example: https://example-fixture.test/. Facts on these pages must be inferred from prose rather than read directly.",
+      "suggested_action": {
+        "summary": "Add the type-appropriate schema (Product+Offer, Article, FAQPage, BreadcrumbList) to each template, populated from live page data.",
+        "priority": "medium"
+      },
+      "mechanism": "M3",
+      "signal": "M3-S3",
+      "skill": "crawl-render-audit",
+      "scope": "template",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/",
+        "https://example-fixture.test/about.html"
+      ],
+      "affected_count": 2,
+      "evidence_key": "M3-S3:missing-schema",
+      "non_deterministic": false,
+      "falsified_by": "Pages with no matching schema.org type (generic landing, legal, utility) are excluded from this count."
+    },
+    {
+      "id": "F-011",
+      "title": "No declared identity links to any external profile",
+      "severity": "medium",
+      "evidence": "Neither Organization sameAs nor external profile links were found across 2 sampled HTML page(s). The site makes no machine-readable claim about where else this entity exists, so corroboration has no starting point.",
+      "suggested_action": {
+        "summary": "Claim and link the official profiles that already exist for this entity (company registry, LinkedIn, industry directories, Wikidata if notable) and list them in sameAs.",
+        "priority": "medium"
+      },
+      "mechanism": "M4",
+      "signal": "M4-S2",
+      "skill": "freshness-corroboration",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M4-S2:no-external-identity",
+      "non_deterministic": false,
+      "falsified_by": "A business with a deliberate no-social-presence policy is not defective; the fix then is a registry/directory entry, not a social account."
+    },
+    {
+      "id": "F-012",
+      "title": "No machine-readable statement of where the entity operates",
+      "severity": "medium",
+      "evidence": "No areaServed, PostalAddress or explicit coverage statement was found in structured data or body text across 2 sampled page(s). Location is a primary personalisation axis: a system deciding whether to surface this brand for a user in a given place has nothing to match against.",
+      "suggested_action": {
+        "summary": "Declare areaServed (or a PostalAddress for a physical business) in the Organization JSON-LD and state the served geography in plain text on the homepage and contact page.",
+        "priority": "medium"
+      },
+      "mechanism": "M6",
+      "signal": "M6-S2",
+      "skill": "freshness-corroboration",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M6-S2:no-geo",
+      "non_deterministic": false,
+      "falsified_by": "Any areaServed/address property or an explicit 'serving X' sentence suppresses this entirely."
+    },
+    {
+      "id": "F-013",
+      "title": "No XML sitemap (small site — proactive)",
+      "severity": "low",
+      "evidence": "Only 2 pages were reachable by crawl and no sitemap exists. Not currently blocking discovery, but a sitemap makes new pages discoverable on their first day rather than on the next full crawl.",
+      "suggested_action": {
+        "summary": "Add a small /sitemap.xml with lastmod and reference it in robots.txt.",
+        "priority": "low"
+      },
+      "mechanism": "M1",
+      "signal": "M1-S3",
+      "skill": "crawl-render-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M1-S3:no-sitemap-small",
+      "non_deterministic": false
+    },
+    {
+      "id": "F-014",
+      "title": "Pages have no meta description",
+      "severity": "low",
+      "evidence": "2 of 2 pages omit a meta description, e.g. https://example-fixture.test/. This is the one-sentence summary shown in search results and link previews — without it, an automatically-chosen fragment is shown instead.",
+      "suggested_action": {
+        "summary": "Write a specific one-sentence description per page stating what the page answers. Do not template it from the brand tagline.",
+        "priority": "low"
+      },
+      "mechanism": "M3",
+      "signal": "E6",
+      "skill": "engagement-audit",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/",
+        "https://example-fixture.test/about.html"
+      ],
+      "affected_count": 2,
+      "evidence_key": "E6:no-meta-description",
+      "non_deterministic": false
+    },
+    {
+      "id": "F-015",
+      "title": "Footer copyright year is out of date (weak signal)",
+      "severity": "low",
+      "evidence": "footer copyright reads 2019 on 1 page(s). On its own this is cosmetic, but it is the cheapest visible freshness cue a reader or crawler encounters.",
+      "suggested_action": {
+        "summary": "Render the copyright year dynamically.",
+        "priority": "low"
+      },
+      "mechanism": "M4",
+      "signal": "M4-S3",
+      "skill": "freshness-corroboration",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M4-S3:copyright-only",
+      "non_deterministic": false
+    },
+    {
+      "id": "F-016",
+      "title": "Intended audience is never stated explicitly (proactive)",
+      "severity": "low",
+      "evidence": "No audience/targetAudience property and no explicit 'for <who>' statement was detected across 2 sampled page(s). Stating the audience plainly helps a personalising system decide which users this brand is a good answer for.",
+      "suggested_action": {
+        "summary": "Add one sentence naming the intended customer ('for operations teams at retailers with 10-200 stores') near the top of the homepage, and mirror it in the Organization description.",
+        "priority": "low"
+      },
+      "mechanism": "M6",
+      "signal": "M6-S2",
+      "skill": "freshness-corroboration",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "M6-S2:no-audience",
+      "non_deterministic": false
+    },
+    {
+      "id": "F-017",
+      "title": "Pages do not declare a language",
+      "severity": "low",
+      "evidence": "2 of 2 pages have no lang attribute on <html> (e.g. https://example-fixture.test/). Language is one of the cheapest signals a system uses to decide whether this page suits a given user.",
+      "suggested_action": {
+        "summary": "Set <html lang> on every page from the CMS locale.",
+        "priority": "low"
+      },
+      "mechanism": "M6",
+      "signal": "M6-S2",
+      "skill": "freshness-corroboration",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "https://example-fixture.test/",
+        "https://example-fixture.test/about.html"
+      ],
+      "affected_count": 2,
+      "evidence_key": "M6-S2:no-lang",
+      "non_deterministic": false
+    }
+  ],
+  "proactive_recommendations": [
+    {
+      "id": "R-001",
+      "title": "Earn independent restatement of the core identity claim",
+      "evidence": "On-page work cannot create cross-source agreement. Facts repeated consistently across unrelated domains are treated as more reliable than facts that exist in one place only.",
+      "suggested_action": {
+        "summary": "Target obtainable, independent surfaces rather than press coverage: the national company register, two or three industry association or trade directories, a Wikidata item if notability is genuinely met, conference and partner listings, and customer case studies published on the customer's own domain. Use identical name, category and location wording on every one.",
+        "priority": "high"
+      },
+      "mechanism": "M4",
+      "signal": "P-CORROB",
+      "skill": "audit-orchestrator",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "http://127.0.0.1:8800/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "proactive:P-CORROB",
+      "finding_type": "proactive"
+    },
+    {
+      "id": "R-002",
+      "title": "Publish an FAQ block built from questions support actually receives",
+      "evidence": "No FAQ or question-shaped heading block was detected in the sampled pages. Assistants assemble answers from sources where a question and its answer sit adjacent in plain text; an FAQ is the cheapest structure that guarantees that adjacency.",
+      "suggested_action": {
+        "summary": "Collect the questions sales and support are actually asked, publish them verbatim as headings with a direct one-sentence answer beneath each, and mark the block up as FAQPage JSON-LD.",
+        "priority": "medium"
+      },
+      "mechanism": "M2",
+      "signal": "P-FAQ",
+      "skill": "audit-orchestrator",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "http://127.0.0.1:8800/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "proactive:P-FAQ",
+      "finding_type": "proactive"
+    },
+    {
+      "id": "R-003",
+      "title": "Publish a canonical facts page for the entity",
+      "evidence": "Core facts (founding year, size, locations, leadership, key figures) are typically spread across prose on several pages. A single page that states them plainly gives every downstream system one URL to reach, read and quote — and gives the brand one place to keep current.",
+      "suggested_action": {
+        "summary": "Create a /about/facts (or press kit) page listing the entity's core facts as short labelled statements and a table, in plain HTML text, with a visible last-reviewed date. Link it from the footer and reference it from the Organization JSON-LD.",
+        "priority": "medium"
+      },
+      "mechanism": "M4",
+      "signal": "P-FACTS",
+      "skill": "audit-orchestrator",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "http://127.0.0.1:8800/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "proactive:P-FACTS",
+      "finding_type": "proactive"
+    },
+    {
+      "id": "R-004",
+      "title": "Add a visible last-reviewed date to fact-bearing pages",
+      "evidence": "No dated freshness signal was found on evergreen pages. Undated evergreen content cannot be assessed for currency, so a retrieval system has no way to prefer it over an older competing source.",
+      "suggested_action": {
+        "summary": "Show 'Last reviewed: <month year>' on pricing, product, policy and about pages, back it with dateModified in structured data, and put a recurring review date in the content calendar so the label stays true.",
+        "priority": "low"
+      },
+      "mechanism": "M4",
+      "signal": "P-REVIEWED",
+      "skill": "audit-orchestrator",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "http://127.0.0.1:8800/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "proactive:P-REVIEWED",
+      "finding_type": "proactive"
+    },
+    {
+      "id": "R-005",
+      "title": "Declare name variants and a stable entity identifier",
+      "evidence": "Even where naming is currently consistent, declaring the variants explicitly makes the entity resolvable as the brand grows and as similarly-named entities appear.",
+      "suggested_action": {
+        "summary": "Add alternateName for every legitimate variant (trading name, legal name, common abbreviation) and give the Organization a stable @id referenced from every other node.",
+        "priority": "low"
+      },
+      "mechanism": "M5",
+      "signal": "P-ALTNAME",
+      "skill": "audit-orchestrator",
+      "scope": "site",
+      "confidence": "observed",
+      "affected_urls": [
+        "http://127.0.0.1:8800/"
+      ],
+      "affected_count": 1,
+      "evidence_key": "proactive:P-ALTNAME",
+      "finding_type": "proactive"
+    }
+  ],
+  "audit_scope": {
+    "start_url": "https://example-fixture.test/",
+    "pages_fetched": 5,
+    "html_pages_analysed": 2,
+    "robots_status": 200,
+    "entity_name": "Home",
+    "entity_name_source": "<title> suffix on http://127.0.0.1:8800/",
+    "render_check": "off",
+    "runtime_seconds": 0.6,
+    "skills_run": [
+      "crawl-render-audit",
+      "freshness-corroboration",
+      "engagement-audit"
+    ],
+    "skills_failed": {},
+    "findings_folded_into_root_causes": 1,
+    "mode": "recommend-only; no site modified"
+  },
+  "pending_probes": [
+    {
+      "id": "P-CORROBORATION",
+      "signal": "M4-S1",
+      "purpose": "Count independent domains that restate the entity's core identity claim.",
+      "queries": [
+        "\"Home\" 127.0.0.1",
+        "\"Home\" company profile",
+        "what is \"Home\""
+      ],
+      "method": "Run each query. Count DISTINCT registrable domains, excluding 127.0.0.1 and its subdomains, that state the same category/identity claim. Discard press-release syndication copies and scraped directory clones (near-identical wording).",
+      "flag_if": "0 independent domains restate the primary identity claim.",
+      "severity_ceiling": "medium",
+      "reason_for_ceiling": "Evidence comes from a personalised, non-reproducible surface (M6-S3), so severity is capped and the finding must be stable across two runs.",
+      "run_twice": true
+    },
+    {
+      "id": "P-AMBIGUITY",
+      "signal": "M5-S1",
+      "purpose": "Confirm real-world name collision before flagging ambiguity.",
+      "queries": [
+        "\"Home\"",
+        "Home 127.0.0.1"
+      ],
+      "method": "Inspect the first page of results. Record how many distinct entity types/organisations share this name.",
+      "flag_if": "Two or more unrelated entities share the name AND the site supplies fewer than two disambiguators (see M5-S1 above).",
+      "severity_ceiling": "medium",
+      "run_twice": true
+    }
+  ],
+  "_note": "Illustrative output produced against a deliberately-broken local fixture site. Not a real domain."
+}

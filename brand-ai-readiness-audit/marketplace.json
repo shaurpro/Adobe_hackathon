@@ -1,0 +1,37 @@
+{
+  "name": "brand-ai-readiness-audit",
+  "version": "1.0.0",
+  "description": "Audits any website for AI discoverability (why assistants can't find, read, or cite the brand) and on-site engagement (why humans who arrive don't stay), and emits a single schema-conformant report of evidence-backed findings with prioritized suggested actions.",
+  "license": "MIT",
+  "safety": {
+    "mode": "recommend-only",
+    "modifies_target_site": false,
+    "respects_robots_txt": true,
+    "authenticated_actions": false,
+    "destructive_actions": false,
+    "max_runtime_seconds": 300
+  },
+  "skills": [
+    {
+      "id": "audit-orchestrator",
+      "path": "skills/audit-orchestrator",
+      "entrypoint": true,
+      "role": "Receives the audit request, invokes the three analysis skills, merges and dedupes their findings, computes severity and summary counts, and emits the final audit report."
+    },
+    {
+      "id": "crawl-render-audit",
+      "path": "skills/crawl-render-audit",
+      "role": "Mechanisms 1-3: crawler admission, response integrity, discovery surface, fetch gating, client-side render gaps, facts locked in non-text, structured-data presence/validity/agreement."
+    },
+    {
+      "id": "freshness-corroboration",
+      "path": "skills/freshness-corroboration",
+      "role": "Mechanisms 4-6: cross-source corroboration, declared-identity round trip, internal contradiction and staleness, entity disambiguation, and context legibility under personalization."
+    },
+    {
+      "id": "engagement-audit",
+      "path": "skills/engagement-audit",
+      "role": "On-site friction for the human visitor: orientation above the fold, clarity of core facts, structural noise, and availability of a next step."
+    }
+  ]
+}
